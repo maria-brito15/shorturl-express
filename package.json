@@ -16,7 +16,8 @@
     "redis": "^4.7.0",
     "nanoid": "^3.3.7",
     "dotenv": "^16.4.5",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
