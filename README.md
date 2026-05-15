@@ -26,8 +26,8 @@ Encurtador de URLs com rastreamento de cliques, construído com **Node.js**, **T
 | Framework         | Express 4                 |
 | Banco de dados    | MongoDB 7 (Mongoose 8)    |
 | Cache             | Redis 7                   |
+| Validação         | Zod 3                     |
 | Geração de código | nanoid 3                  |
-| Validação         | Zod                       |
 | Containerização   | Docker + Docker Compose   |
 | CI                | GitHub Actions            |
 
@@ -82,7 +82,19 @@ cp .env.example .env
 docker compose up
 ```
 
-A API estará disponível em `http://localhost:3000`.
+A aplicação estará disponível em `http://localhost:3000`.
+
+> **Atenção:** se você tiver o MongoDB instalado localmente na máquina, ele pode estar ocupando a porta 27017 e impedir que o Docker mapeie a porta corretamente. Nesse caso, pare o serviço local antes de subir o compose:
+>
+> ```powershell
+> # Windows (PowerShell como Administrador)
+> Stop-Service -Name MongoDB
+> ```
+>
+> ```bash
+> # Linux/macOS
+> sudo systemctl stop mongod
+> ```
 
 ---
 
@@ -114,6 +126,32 @@ Copie `.env.example` para `.env` e ajuste conforme necessário:
 | `MONGO_URL` | URI de conexão com o MongoDB                | `mongodb://localhost:27017/shorturl` |
 | `REDIS_URL` | URI de conexão com o Redis                  | `redis://localhost:6379`             |
 | `BASE_URL`  | URL base usada para montar o link encurtado | `http://localhost:3000`              |
+
+---
+
+## 🔍 Inspecionando os dados (MongoDB Compass)
+
+O `docker-compose.yml` expõe a porta do MongoDB para que ferramentas externas como o [MongoDB Compass](https://www.mongodb.com/products/compass) possam se conectar:
+
+1. Abra o MongoDB Compass
+2. Conecte com a string: `mongodb://localhost:27017`
+3. Navegue até o banco **shorturl** → coleção **urls**
+
+Cada documento tem a seguinte estrutura:
+
+```json
+{
+  "_id": { "$oid": "..." },
+  "originalUrl": "https://exemplo.com/url-longa",
+  "code": "aB3xYz",
+  "clicks": 3,
+  "createdAt": { "$date": "2026-05-15T17:44:11.229Z" },
+  "updatedAt": { "$date": "2026-05-15T17:44:13.046Z" },
+  "__v": 0
+}
+```
+
+> **Atenção:** se o Compass mostrar a coleção vazia mesmo após criar links, verifique se há um MongoDB local rodando na porta 27017 e conflitando com o do Docker (veja a seção de troubleshooting abaixo).
 
 ---
 
@@ -204,6 +242,29 @@ O pipeline de CI roda automaticamente em todo push e pull request para a branch 
 1. Instala dependências
 2. Checa tipos com TypeScript (`tsc --noEmit`)
 3. Compila o projeto (`tsc`)
+
+---
+
+## 🐛 Troubleshooting
+
+### MongoDB Compass mostra coleção vazia
+
+Você provavelmente tem um MongoDB instalado localmente ocupando a porta 27017. O Compass se conecta a ele em vez do container Docker. Para resolver:
+
+```powershell
+# Windows (PowerShell como Administrador)
+Stop-Service -Name MongoDB
+
+# Para desabilitar o início automático permanentemente:
+Set-Service -Name MongoDB -StartupType Disabled
+```
+
+Depois suba o compose novamente:
+
+```bash
+docker compose down
+docker compose up
+```
 
 ---
 
